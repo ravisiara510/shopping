@@ -220,8 +220,8 @@ class CartItemWidget extends StatelessWidget {
 
   Widget _buildProductImage(int discountPercentage) {
     return Container(
-      width: 86.w,
-      height: 86.h,
+      width: 80.w,
+      height: 70.h,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -367,14 +367,6 @@ class CartItemWidget extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Item Total',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withOpacity(0.6),
-                  fontSize: 12.sp,
-                ),
-              ),
-              SizedBox(height: 1.h), // -4 from 2
               Text(
                 '₹${(item['finalPrice'] ?? 0.0).toStringAsFixed(0)}',
                 style: theme.textTheme.titleLarge?.copyWith(

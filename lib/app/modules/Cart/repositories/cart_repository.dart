@@ -84,4 +84,29 @@ class CartRepository extends GetxService {
       throw Exception('Failed to create order: $e');
     }
   }
+
+  // Add this method to your CartRepository class
+// Add this method to your CartRepository class
+  Future<Map<String, dynamic>> addMultipleToCart({
+    required List<Map<String, dynamic>> items,
+  }) async {
+    try {
+      final endpoint =
+          "${ApiEndpoints.addtoCart}${SharedpreferenceUtil.getString(AppStorage.selectedCompanyId)}";
+      final data = {
+        "items": items
+            .map((item) => {
+                  "productId": item['productId'],
+                  "quantity": item['quantity'],
+                })
+            .toList()
+      };
+      final response = await _apiService.postRequestAuth(endpoint, data);
+      return response.data;
+    } on ApiException catch (e) {
+      throw Exception('Failed to add items to cart: ${e.message}');
+    } catch (e) {
+      throw Exception('Failed to add items to cart: $e');
+    }
+  }
 }

@@ -40,27 +40,27 @@ class ProfileView extends GetView<ProfileController> {
               icon: Icon(Platform.isIOS
                   ? Icons.arrow_back_ios_new_outlined
                   : Icons.arrow_back_outlined)),
-          actions: [
-            PopupMenuButton<String>(
-              onSelected: (String language) {
-                if (language == 'en') {
-                  Get.updateLocale(const Locale('en', 'US'));
-                } else if (language == 'bn') {
-                  Get.updateLocale(const Locale('bn', 'BD'));
-                }
-              },
-              itemBuilder: (BuildContext context) => [
-                const PopupMenuItem<String>(
-                  value: 'en',
-                  child: Text('English'),
-                ),
-                const PopupMenuItem<String>(
-                  value: 'bn',
-                  child: Text('বাংলা'),
-                ),
-              ],
-            ),
-          ],
+          // actions: [
+          //   PopupMenuButton<String>(
+          //     onSelected: (String language) {
+          //       if (language == 'en') {
+          //         Get.updateLocale(const Locale('en', 'US'));
+          //       } else if (language == 'bn') {
+          //         Get.updateLocale(const Locale('bn', 'BD'));
+          //       }
+          //     },
+          //     itemBuilder: (BuildContext context) => [
+          //       const PopupMenuItem<String>(
+          //         value: 'en',
+          //         child: Text('English'),
+          //       ),
+          //       const PopupMenuItem<String>(
+          //         value: 'bn',
+          //         child: Text('বাংলা'),
+          //       ),
+          //     ],
+          //   ),
+          // ],
         ),
         body: SafeArea(
           child: SingleChildScrollView(
@@ -167,13 +167,13 @@ class ProfileView extends GetView<ProfileController> {
           Get.toNamed(Routes.PAYMENT_MANAGEMENT);
         },
       ),
-      _MenuItem(
-        icon: Icons.language_outlined,
-        title: "language".tr,
-        onTap: () {
-          _showLanguageDialog();
-        },
-      ),
+      // _MenuItem(
+      //   icon: Icons.language_outlined,
+      //   title: "language".tr,
+      //   onTap: () {
+      //     _showLanguageDialog();
+      //   },
+      // ),
       _MenuItem(
         icon: Icons.support_agent_outlined,
         title: "contact_support".tr,
@@ -197,7 +197,7 @@ class ProfileView extends GetView<ProfileController> {
       ),
       _MenuItem(
         icon: Icons.payment_outlined,
-        title: "refund_policy".tr,
+        title: "Refund Policy".tr,
         onTap: () {
           Get.to(() => const RefundPolicyView());
         },

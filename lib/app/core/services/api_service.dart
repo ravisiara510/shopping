@@ -1,131 +1,151 @@
+// lib/core/services/api_service.dart
 import 'dart:io';
-import 'package:dio/dio.dart';
-import 'package:http_parser/http_parser.dart'; // For MediaType
+import 'package:dio/dio.dart' as dio;
+import 'package:http_parser/http_parser.dart';
+import 'package:get/get.dart';
+import '../../services/auth_service.dart';
 import '../data/sharedPre.dart';
 import '../utils/appString/app_storage_string.dart';
 import 'api_client.dart';
 import 'api_exceptions.dart';
 
 class ApiService {
-  final Dio _dio = ApiClient().dio;
+  final dio.Dio _dio = ApiClient().dio;
+  final AuthService _authService = Get.find<AuthService>();
 
   // ==========================================================
   // ================ COMMON REQUEST METHODS =================
   // ==========================================================
 
   // -------------------- GET --------------------
-  Future<Response> getRequest(String endpoint,
+  Future<dio.Response> getRequest(String endpoint,
       {Map<String, dynamic>? queryParams}) async {
     try {
       final response = await _dio.get(
         endpoint,
         queryParameters: queryParams,
-        options: Options(headers: _defaultHeaders()),
+        options: dio.Options(headers: _defaultHeaders()),
       );
       return response;
-    } on DioException catch (e) {
+    } on dio.DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
   }
 
-  Future<Response> getRequestAuth(String endpoint,
+  Future<dio.Response> getRequestAuth(String endpoint,
       {Map<String, dynamic>? queryParams}) async {
     try {
       final token = await _getAuthToken();
       final response = await _dio.get(
         endpoint,
         queryParameters: queryParams,
-        options: Options(headers: _authHeaders(token)),
+        options: dio.Options(headers: _authHeaders(token)),
       );
       return response;
-    } on DioException catch (e) {
-      throw ApiException.fromDioError(e);
+    } on dio.DioException catch (e) {
+      final apiException = ApiException.fromDioError(e);
+      if (apiException.isUnauthorized) {
+        await _authService.handleUnauthorizedError();
+      }
+      rethrow;
     }
   }
 
   // -------------------- POST --------------------
-  Future<Response> postRequest(String endpoint, dynamic data) async {
+  Future<dio.Response> postRequest(String endpoint, dynamic data) async {
     try {
       final response = await _dio.post(
         endpoint,
         data: data,
-        options: Options(headers: _defaultHeaders()),
+        options: dio.Options(headers: _defaultHeaders()),
       );
       return response;
-    } on DioException catch (e) {
+    } on dio.DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
   }
 
-  Future<Response> postRequestAuth(String endpoint, dynamic data) async {
+  Future<dio.Response> postRequestAuth(String endpoint, dynamic data) async {
     try {
       final token = await _getAuthToken();
       final response = await _dio.post(
         endpoint,
         data: data,
-        options: Options(headers: _authHeaders(token)),
+        options: dio.Options(headers: _authHeaders(token)),
       );
       return response;
-    } on DioException catch (e) {
-      throw ApiException.fromDioError(e);
+    } on dio.DioException catch (e) {
+      final apiException = ApiException.fromDioError(e);
+      if (apiException.isUnauthorized) {
+        await _authService.handleUnauthorizedError();
+      }
+      rethrow;
     }
   }
 
   // -------------------- PUT --------------------
-  Future<Response> putRequest(String endpoint, dynamic data) async {
+  Future<dio.Response> putRequest(String endpoint, dynamic data) async {
     try {
       final response = await _dio.put(
         endpoint,
         data: data,
-        options: Options(headers: _defaultHeaders()),
+        options: dio.Options(headers: _defaultHeaders()),
       );
       return response;
-    } on DioException catch (e) {
+    } on dio.DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
   }
 
-  Future<Response> putRequestAuth(String endpoint, dynamic data) async {
+  Future<dio.Response> putRequestAuth(String endpoint, dynamic data) async {
     try {
       final token = await _getAuthToken();
       final response = await _dio.put(
         endpoint,
         data: data,
-        options: Options(headers: _authHeaders(token)),
+        options: dio.Options(headers: _authHeaders(token)),
       );
       return response;
-    } on DioException catch (e) {
-      throw ApiException.fromDioError(e);
+    } on dio.DioException catch (e) {
+      final apiException = ApiException.fromDioError(e);
+      if (apiException.isUnauthorized) {
+        await _authService.handleUnauthorizedError();
+      }
+      rethrow;
     }
   }
 
   // -------------------- DELETE --------------------
-  Future<Response> deleteRequest(String endpoint,
+  Future<dio.Response> deleteRequest(String endpoint,
       {Map<String, dynamic>? queryParams}) async {
     try {
       final response = await _dio.delete(
         endpoint,
         queryParameters: queryParams,
-        options: Options(headers: _defaultHeaders()),
+        options: dio.Options(headers: _defaultHeaders()),
       );
       return response;
-    } on DioException catch (e) {
+    } on dio.DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
   }
 
-  Future<Response> deleteRequestAuth(String endpoint,
+  Future<dio.Response> deleteRequestAuth(String endpoint,
       {Map<String, dynamic>? queryParams}) async {
     try {
       final token = await _getAuthToken();
       final response = await _dio.delete(
         endpoint,
         queryParameters: queryParams,
-        options: Options(headers: _authHeaders(token)),
+        options: dio.Options(headers: _authHeaders(token)),
       );
       return response;
-    } on DioException catch (e) {
-      throw ApiException.fromDioError(e);
+    } on dio.DioException catch (e) {
+      final apiException = ApiException.fromDioError(e);
+      if (apiException.isUnauthorized) {
+        await _authService.handleUnauthorizedError();
+      }
+      rethrow;
     }
   }
 
@@ -134,18 +154,18 @@ class ApiService {
   // ==========================================================
 
   /// 🔹 Upload files (image, pdf, etc.) WITHOUT authentication
-  Future<Response> uploadFiles(
+  Future<dio.Response> uploadFiles(
     String endpoint, {
     required Map<String, dynamic> fields,
     required List<File> files,
     String fileFieldName = 'files',
-    ProgressCallback? onProgress,
+    dio.ProgressCallback? onProgress,
   }) async {
     try {
       // Convert files to MultipartFile list
       final fileList = await Future.wait(
         files.map(
-          (file) async => await MultipartFile.fromFile(
+          (file) async => await dio.MultipartFile.fromFile(
             file.path,
             filename: file.path.split('/').last,
             contentType: _getMediaType(file.path),
@@ -153,7 +173,7 @@ class ApiService {
         ),
       );
 
-      final formData = FormData.fromMap({
+      final formData = dio.FormData.fromMap({
         ...fields,
         fileFieldName: fileList.length == 1 ? fileList.first : fileList,
       });
@@ -162,36 +182,32 @@ class ApiService {
         endpoint,
         data: formData,
         onSendProgress: onProgress,
-        options: Options(
+        options: dio.Options(
           headers: _defaultHeaders(),
           contentType: 'multipart/form-data',
         ),
       );
 
       return response;
-    } on DioException catch (e) {
+    } on dio.DioException catch (e) {
       throw ApiException.fromDioError(e);
     }
   }
 
   /// 🔹 Upload files (image, pdf, etc.) WITH authentication
-// In your ApiService class, update the uploadFilesAuth method:
-
-  /// 🔹 Upload files (image, pdf, etc.) WITH authentication
-  /// 🔹 Upload files (image, pdf, etc.) WITH authentication
-  Future<Response> uploadFilesAuth(
+  Future<dio.Response> uploadFilesAuth(
     String endpoint, {
     required Map<String, dynamic> fields,
     required List<File> files,
-    String fileFieldName = 'documents', // Change from 'files' to 'documents'
-    ProgressCallback? onProgress,
+    String fileFieldName = 'documents',
+    dio.ProgressCallback? onProgress,
   }) async {
     try {
       final token = await _getAuthToken();
 
       final fileList = await Future.wait(
         files.map(
-          (file) async => await MultipartFile.fromFile(
+          (file) async => await dio.MultipartFile.fromFile(
             file.path,
             filename: file.path.split('/').last,
             contentType: _getMediaType(file.path),
@@ -199,7 +215,7 @@ class ApiService {
         ),
       );
 
-      final formData = FormData.fromMap({
+      final formData = dio.FormData.fromMap({
         ...fields,
         fileFieldName: fileList.length == 1 ? fileList.first : fileList,
       });
@@ -208,17 +224,22 @@ class ApiService {
         endpoint,
         data: formData,
         onSendProgress: onProgress,
-        options: Options(
+        options: dio.Options(
           headers: _authHeaders(token),
           contentType: 'multipart/form-data',
         ),
       );
 
       return response;
-    } on DioException catch (e) {
-      throw ApiException.fromDioError(e);
+    } on dio.DioException catch (e) {
+      final apiException = ApiException.fromDioError(e);
+      if (apiException.isUnauthorized) {
+        await _authService.handleUnauthorizedError();
+      }
+      rethrow;
     }
   }
+
   // ==========================================================
   // =============== Helper Utilities =========================
   // ==========================================================

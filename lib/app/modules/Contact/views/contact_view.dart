@@ -8,38 +8,33 @@ class ContactView extends GetView<ContactController> {
 
   @override
   Widget build(BuildContext context) {
-    return ScreenUtilInit(
-      designSize: const Size(360, 690), // Default design size
-      minTextAdapt: true, // Enable minimum text adaptation
-      splitScreenMode: true, // Support different screen sizes
-      builder: (_, child) {
-        return Scaffold(
-          backgroundColor: Theme.of(context).colorScheme.background,
-          appBar: AppBar(
-            title: Text(
-              "Contact Us",
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            centerTitle: true,
+    return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.background,
+      appBar: AppBar(
+        title: Text(
+          "Contact Us",
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
           ),
-          body: SingleChildScrollView(
-            padding: EdgeInsets.all(8.w),
-            child: Column(
-              children: [
-                SizedBox(height: 15.h),
-                const _ContactMethods(),
-                SizedBox(height: 15.h),
-                const _LocationSection(),
-                SizedBox(height: 15.h),
-                const _SocialMediaSection(),
-                SizedBox(height: 15.h),
-              ],
-            ),
-          ),
-        );
-      },
+        ),
+        centerTitle: true,
+      ),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(8.w),
+        child: Column(
+          children: [
+            SizedBox(height: 15.h),
+            const _ContactMethods(),
+            SizedBox(height: 15.h),
+            const _LocationSection(),
+            SizedBox(height: 15.h),
+            const _BusinessHoursSection(),
+            SizedBox(height: 15.h),
+            const _SocialMediaSection(),
+            SizedBox(height: 15.h),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -133,7 +128,7 @@ class _LocationSection extends GetView<ContactController> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "Our Location",
+              "Our Offices",
               style: TextStyle(
                 fontSize: 16.sp,
                 fontWeight: FontWeight.bold,
@@ -141,41 +136,258 @@ class _LocationSection extends GetView<ContactController> {
               ),
             ),
             SizedBox(height: 16.h),
-            _InfoRow(
-              icon: Icons.business,
-              text: controller.branchInfo.name,
+
+            // Noida HQ
+            _OfficeSection(
+              title: "Noida (Headquarters)",
+              subtitle: "Delhi NCR",
+              address:
+                  "C-55, Sector 2, Near Sector 15 Metro Station, Noida, Uttar Pradesh 201301",
+              onMapTap: () => controller.openNoidaMaps(),
             ),
-            SizedBox(height: 12.h),
-            _InfoRow(
-              icon: Icons.location_on,
-              text: controller.branchInfo.address,
+            SizedBox(height: 20.h),
+
+            // Kolkata Office
+            _OfficeSection(
+              title: "Kolkata",
+              subtitle: "Eastern India",
+              address: "Kolkata, West Bengal",
+              onMapTap: () => controller.openKolkataMaps(),
             ),
-            SizedBox(height: 12.h),
-            _InfoRow(
-              icon: Icons.access_time,
-              text: controller.branchInfo.hours,
+            SizedBox(height: 20.h),
+
+            // Dubai Office
+            _OfficeSection(
+              title: "Dubai",
+              subtitle: "Coming Soon - United Arab Emirates",
+              address: "International Expansion",
+              onMapTap: () => controller.openDubaiMaps(),
+              isComingSoon: true,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _OfficeSection extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final String address;
+  final VoidCallback onMapTap;
+  final bool isComingSoon;
+
+  const _OfficeSection({
+    required this.title,
+    required this.subtitle,
+    required this.address,
+    required this.onMapTap,
+    this.isComingSoon = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              Icons.business,
+              size: 16.w,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            SizedBox(width: 12.w),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurface
+                          .withOpacity(0.7),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (isComingSoon)
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(4.r),
+                ),
+                child: Text(
+                  "Coming Soon",
+                  style: TextStyle(
+                    fontSize: 10.sp,
+                    color: Colors.orange,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+          ],
+        ),
+        SizedBox(height: 8.h),
+        Padding(
+          padding: EdgeInsets.only(left: 28.w),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _InfoRow(
+                icon: Icons.location_on,
+                text: address,
+              ),
+              if (!isComingSoon) ...[
+                SizedBox(height: 12.h),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: onMapTap,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.map, size: 16.w),
+                        SizedBox(width: 8.w),
+                        Text(
+                          "Open in Maps",
+                          style: TextStyle(fontSize: 14.sp),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _BusinessHoursSection extends GetView<ContactController> {
+  const _BusinessHoursSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 0,
+      child: Padding(
+        padding: EdgeInsets.all(20.w),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Business Hours",
+              style: TextStyle(
+                fontSize: 16.sp,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
             ),
             SizedBox(height: 16.h),
-            SizedBox(
+            _BusinessHourRow(
+              day: "Monday - Friday",
+              time: "10:00 AM - 7:00 PM",
+            ),
+            SizedBox(height: 12.h),
+            _BusinessHourRow(
+              day: "Saturday",
+              time: "10:00 AM - 5:00 PM",
+            ),
+            SizedBox(height: 12.h),
+            _BusinessHourRow(
+              day: "Sunday",
+              time: "Closed",
+              isClosed: true,
+            ),
+            SizedBox(height: 16.h),
+            Container(
               width: double.infinity,
-              child: FilledButton(
-                onPressed: controller.openMaps,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.map, size: 16.w),
-                    SizedBox(width: 8.w),
-                    Text(
-                      "Open in Maps",
-                      style: TextStyle(fontSize: 14.sp),
+              padding: EdgeInsets.all(12.w),
+              decoration: BoxDecoration(
+                color: Colors.green.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8.r),
+                border: Border.all(color: Colors.green.withOpacity(0.3)),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.emergency,
+                    size: 16.w,
+                    color: Colors.green,
+                  ),
+                  SizedBox(width: 8.w),
+                  Expanded(
+                    child: Text(
+                      "Emergency support available 24/7 for existing clients",
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: Colors.green,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _BusinessHourRow extends StatelessWidget {
+  final String day;
+  final String time;
+  final bool isClosed;
+
+  const _BusinessHourRow({
+    required this.day,
+    required this.time,
+    this.isClosed = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          day,
+          style: TextStyle(
+            fontSize: 13.sp,
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+          ),
+        ),
+        Text(
+          time,
+          style: TextStyle(
+            fontSize: 13.sp,
+            color: isClosed
+                ? Colors.red
+                : Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+            fontWeight: isClosed ? FontWeight.w500 : FontWeight.normal,
+          ),
+        ),
+      ],
     );
   }
 }

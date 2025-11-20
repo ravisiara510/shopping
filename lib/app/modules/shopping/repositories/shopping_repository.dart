@@ -20,10 +20,13 @@ class ShoppingRepository {
 
       return response.data;
     } on ApiException catch (e) {
-      assert(() {
-        log("❌ Stock items ApiException: ${e.message}");
-        return true;
-      }());
+      // 401 is already handled by ApiService, just rethrow for other errors
+      if (!e.isUnauthorized) {
+        assert(() {
+          log("❌ Stock items ApiException: ${e.message}");
+          return true;
+        }());
+      }
       rethrow;
     } catch (e) {
       assert(() {

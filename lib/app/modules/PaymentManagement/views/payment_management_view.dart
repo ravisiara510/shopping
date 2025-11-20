@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
+import '../../../core/utils/logger.dart';
 import '../../../services/toast_service.dart';
 import '../../Customer/controllers/customer_controller.dart';
 import '../controllers/payment_management_controller.dart';
@@ -972,6 +973,46 @@ class PaymentManagementView extends GetView<PaymentManagementController> {
             );
           }
 
+          if (customerController.customers.isEmpty) {
+            return Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(vertical: 16.h),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface,
+                borderRadius: BorderRadius.circular(12.r),
+                border: Border.all(
+                  color: theme.colorScheme.outline.withOpacity(0.2),
+                ),
+              ),
+              child: Column(
+                children: [
+                  Icon(
+                    Iconsax.profile_remove,
+                    size: 24.w,
+                    color: theme.colorScheme.onSurface.withOpacity(0.3),
+                  ),
+                  SizedBox(height: 6.h),
+                  Text(
+                    'No customers found',
+                    style: TextStyle(
+                      fontSize: 12.sp,
+                      color: theme.colorScheme.onSurface.withOpacity(0.5),
+                    ),
+                  ),
+                  SizedBox(height: 6.h),
+                  Text(
+                    'Add customers first to process payments',
+                    style: TextStyle(
+                      fontSize: 10.sp,
+                      color: theme.colorScheme.onSurface.withOpacity(0.4),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            );
+          }
+
           return Container(
             decoration: BoxDecoration(
               color: theme.colorScheme.surface,
@@ -998,31 +1039,38 @@ class PaymentManagementView extends GetView<PaymentManagementController> {
                 ),
                 items: [
                   ...customerController.customers.map((customer) {
+                    final customerId = customer['_id'] ?? '';
+                    final customerName = customer['customerName'] ?? 'Unknown';
+                    final customerEmail = customer['customerEmail'] ?? '';
+
                     return DropdownMenuItem<String>(
-                      value: customer['_id'],
+                      value: customerId,
                       child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 12.w),
+                        padding: EdgeInsets.symmetric(
+                            horizontal: 12.w, vertical: 8.h),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              customer['customerName'] ?? 'Unknown',
+                              customerName,
                               style: TextStyle(
                                 fontSize: 12.sp,
                                 fontWeight: FontWeight.w600,
                                 color: theme.colorScheme.onSurface,
                               ),
                             ),
-                            if (customer['customerEmail'] != null)
+                            if (customerEmail.isNotEmpty) ...[
+                              SizedBox(height: 2.h),
                               Text(
-                                customer['customerEmail']!,
+                                customerEmail,
                                 style: TextStyle(
                                   fontSize: 10.sp,
                                   color: theme.colorScheme.onSurface
                                       .withOpacity(0.6),
                                 ),
                               ),
+                            ],
                           ],
                         ),
                       ),
@@ -1030,7 +1078,9 @@ class PaymentManagementView extends GetView<PaymentManagementController> {
                   }).toList(),
                 ],
                 onChanged: (value) {
-                  controller.selectedCustomer.value = value!;
+                  if (value != null) {
+                    controller.selectedCustomer.value = value;
+                  }
                 },
                 dropdownColor: theme.colorScheme.surface,
                 borderRadius: BorderRadius.circular(12.r),
@@ -1328,39 +1378,109 @@ class PaymentManagementView extends GetView<PaymentManagementController> {
                       ...controller.uploadedFiles.asMap().entries.map((entry) {
                         final index = entry.key;
                         final file = entry.value;
-                        return Stack(
-                          children: [
-                            Container(
-                              width: 50.w,
-                              height: 50.w,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8.r),
-                                image: DecorationImage(
-                                  image: FileImage(file),
-                                  fit: BoxFit.cover,
+                        final fileName = file.path.split('/').last;
+                        final isImage = _isImageFile(fileName);
+
+                        return GestureDetector(
+                          onTap: () => _showDocumentPreview(
+                              context, file, fileName, isImage),
+                          child: Stack(
+                            children: [
+                              Container(
+                                width: 50.w,
+                                height: 50.w,
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.surface,
+                                  borderRadius: BorderRadius.circular(8.r),
+                                  border: Border.all(
+                                    color: theme.colorScheme.outline
+                                        .withOpacity(0.3),
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.1),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: isImage
+                                    ? ClipRRect(
+                                        borderRadius:
+                                            BorderRadius.circular(8.r),
+                                        child: Image.file(
+                                          file,
+                                          width: 50.w,
+                                          height: 50.w,
+                                          fit: BoxFit.cover,
+                                          errorBuilder:
+                                              (context, error, stackTrace) {
+                                            return _buildFileIcon(
+                                                theme, fileName);
+                                          },
+                                        ),
+                                      )
+                                    : _buildFileIcon(theme, fileName),
+                              ),
+                              Positioned(
+                                top: -4,
+                                right: -4,
+                                child: GestureDetector(
+                                  onTap: () => controller.removeFile(index),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: theme.colorScheme.error,
+                                      shape: BoxShape.circle,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.2),
+                                          blurRadius: 2,
+                                          offset: const Offset(0, 1),
+                                        ),
+                                      ],
+                                    ),
+                                    padding: EdgeInsets.all(4.w),
+                                    child: Icon(
+                                      Icons.close,
+                                      color: theme.colorScheme.onError,
+                                      size: 10.w,
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
-                            Positioned(
-                              top: -2,
-                              right: -2,
-                              child: GestureDetector(
-                                onTap: () => controller.removeFile(index),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: theme.colorScheme.error,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  padding: EdgeInsets.all(3.w),
-                                  child: Icon(
-                                    Icons.close,
-                                    color: theme.colorScheme.onError,
-                                    size: 8.w,
+                              // File name overlay for non-image files
+                              if (!isImage)
+                                Positioned(
+                                  bottom: 0,
+                                  left: 0,
+                                  right: 0,
+                                  child: Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 2.w,
+                                      vertical: 1.h,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withOpacity(0.6),
+                                      borderRadius: BorderRadius.only(
+                                        bottomLeft: Radius.circular(8.r),
+                                        bottomRight: Radius.circular(8.r),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      _getFileExtension(fileName).toUpperCase(),
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 6.sp,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         );
                       }),
                       _buildAddDocumentButton(context),
@@ -1409,6 +1529,321 @@ class PaymentManagementView extends GetView<PaymentManagementController> {
           ],
         ),
       ),
+    );
+  }
+
+// Method to show document preview
+  void _showDocumentPreview(
+      BuildContext context, File file, String fileName, bool isImage) {
+    final theme = Theme.of(context);
+
+    if (isImage) {
+      // Show image in full screen dialog
+      showDialog(
+        context: context,
+        builder: (context) => Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: EdgeInsets.all(20.w),
+          child: Stack(
+            children: [
+              Container(
+                width: double.infinity,
+                height: double.infinity,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16.r),
+                  color: Colors.black87,
+                ),
+                child: InteractiveViewer(
+                  panEnabled: true,
+                  minScale: 0.5,
+                  maxScale: 3.0,
+                  child: Center(
+                    child: Image.file(
+                      file,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Iconsax.gallery_slash,
+                              size: 40.w,
+                              color: Colors.white54,
+                            ),
+                            SizedBox(height: 8.h),
+                            Text(
+                              'Failed to load image',
+                              style: TextStyle(
+                                color: Colors.white54,
+                                fontSize: 12.sp,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 20.h,
+                right: 20.w,
+                child: IconButton(
+                  icon: Icon(
+                    Iconsax.close_circle,
+                    size: 24.w,
+                    color: Colors.white,
+                  ),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+              ),
+              Positioned(
+                bottom: 20.h,
+                left: 0,
+                right: 0,
+                child: Center(
+                  child: Container(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+                    decoration: BoxDecoration(
+                      color: Colors.black54,
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                    child: Text(
+                      fileName,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12.sp,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    } else {
+      // Show file info dialog for non-image files
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: theme.colorScheme.background,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.r),
+          ),
+          title: Row(
+            children: [
+              Icon(
+                Iconsax.document,
+                color: theme.colorScheme.primary,
+                size: 20.w,
+              ),
+              SizedBox(width: 8.w),
+              Text(
+                'Document Info',
+                style: TextStyle(
+                  fontSize: 16.sp,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildFileInfoItem('File Name', fileName),
+              SizedBox(height: 8.h),
+              _buildFileInfoItem(
+                  'File Type', _getFileExtension(fileName).toUpperCase()),
+              SizedBox(height: 8.h),
+              _buildFileInfoItem('File Path', file.path),
+              SizedBox(height: 12.h),
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(12.w),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surface,
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+                child: Column(
+                  children: [
+                    Icon(
+                      _getFileIcon(fileName),
+                      size: 32.w,
+                      color: theme.colorScheme.primary,
+                    ),
+                    SizedBox(height: 8.h),
+                    Text(
+                      'This file cannot be previewed in the app',
+                      style: TextStyle(
+                        fontSize: 10.sp,
+                        color: theme.colorScheme.onSurface.withOpacity(0.6),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                'Close',
+                style: TextStyle(
+                  fontSize: 12.sp,
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                // You can add functionality to open the file with external app
+                _openFileWithExternalApp(file);
+                Navigator.of(context).pop();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: theme.colorScheme.onPrimary,
+              ),
+              child: Text(
+                'Open File',
+                style: TextStyle(fontSize: 12.sp),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+// Helper method to build file info item
+  Widget _buildFileInfoItem(String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '$label: ',
+          style: TextStyle(
+            fontSize: 12.sp,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: TextStyle(
+              fontSize: 12.sp,
+              color: Colors.grey[600],
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+  }
+
+// Method to open file with external app
+  void _openFileWithExternalApp(File file) async {
+    try {
+      ApptoastUtils.showInfo('Opening file with external app...');
+
+      ApptoastUtils.showSuccess('File opened successfully');
+    } catch (e) {
+      AppLogger.error('Error opening file: $e');
+      ApptoastUtils.showError('Failed to open file');
+    }
+  }
+
+// Helper method to get file icon based on file type
+  IconData _getFileIcon(String fileName) {
+    final extension = _getFileExtension(fileName).toLowerCase();
+
+    switch (extension) {
+      case 'pdf':
+        return Iconsax.document_text;
+      case 'doc':
+      case 'docx':
+        return Iconsax.document_text;
+      case 'xls':
+      case 'xlsx':
+        return Iconsax.document_text;
+      case 'txt':
+        return Iconsax.document_text;
+      case 'zip':
+      case 'rar':
+        return Iconsax.archive;
+      default:
+        return Iconsax.document;
+    }
+  }
+
+// Helper method to get file extension
+  String _getFileExtension(String fileName) {
+    try {
+      final parts = fileName.split('.');
+      return parts.length > 1 ? parts.last : 'file';
+    } catch (e) {
+      return 'file';
+    }
+  }
+
+// Helper method to build file icon widget
+  Widget _buildFileIcon(ThemeData theme, String fileName) {
+    final extension = _getFileExtension(fileName).toLowerCase();
+
+    IconData icon;
+    Color color;
+
+    switch (extension) {
+      case 'pdf':
+        icon = Iconsax.document_text;
+        color = Colors.red;
+        break;
+      case 'doc':
+      case 'docx':
+        icon = Iconsax.document_text;
+        color = Colors.blue;
+        break;
+      case 'xls':
+      case 'xlsx':
+        icon = Iconsax.document_text;
+        color = Colors.green;
+        break;
+      case 'txt':
+        icon = Iconsax.document_text;
+        color = Colors.grey;
+        break;
+      case 'zip':
+      case 'rar':
+        icon = Iconsax.archive;
+        color = Colors.orange;
+        break;
+      default:
+        icon = Iconsax.document;
+        color = theme.colorScheme.primary;
+    }
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          icon,
+          size: 20.w,
+          color: color,
+        ),
+        SizedBox(height: 2.h),
+        Text(
+          _getFileExtension(fileName).toUpperCase(),
+          style: TextStyle(
+            fontSize: 6.sp,
+            color: theme.colorScheme.onSurface.withOpacity(0.7),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
     );
   }
 

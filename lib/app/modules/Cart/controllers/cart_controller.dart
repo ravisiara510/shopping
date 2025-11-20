@@ -18,6 +18,7 @@ class CartController extends GetxController {
   final specialInstructions = ''.obs;
   final selectedCoupon = ''.obs;
   final isCouponApplied = false.obs;
+  final itemsAddedViaOrderAgain = false.obs;
 
   final selectedCustomer = Rx<Map<String, dynamic>?>(null);
   final addressLine1 = ''.obs;
@@ -202,8 +203,10 @@ class CartController extends GetxController {
       final response = await _cartRepository.clearCart();
 
       if (response['success'] == true) {
+        itemsAddedViaOrderAgain.value = false;
         // ✅ सभी cart data को clear करें
         resetCartAfterOrder();
+
         ApptoastUtils.showSuccess('Cart cleared successfully');
       } else {
         throw Exception("Failed to clear cart!");
@@ -401,6 +404,7 @@ class CartController extends GetxController {
       if (response['statusCode'] == 201) {
         // Clear cart and reset all values after successful order creation
         resetCartAfterOrder();
+        itemsAddedViaOrderAgain.value = false;
         _showOrderConfirmationBottomSheet(response['data'] ?? {});
         isHidePaymentButton.value = false;
 

@@ -1,15 +1,21 @@
 // order_details_controller.dart
 import 'package:eccomerce_app/app/core/services/api_service.dart';
+import 'package:eccomerce_app/app/modules/Cart/controllers/cart_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:open_file/open_file.dart' as open_file;
 
 import '../../../core/config/api_endpoints.dart';
 import '../../../core/services/pdf_service.dart';
+import '../../../routes/app_pages.dart';
+import '../../../services/toast_service.dart';
+import '../../Cart/repositories/cart_repository.dart';
 
 class OrderDetailsController extends GetxController {
   final ApiService _apiService = ApiService();
   final searchController = TextEditingController();
+  final CartRepository cartRepository = CartRepository();
+  CartController get cartController => Get.find<CartController>();
 
   final orders = <Map<String, dynamic>>[].obs;
   final filteredOrders = <Map<String, dynamic>>[].obs;
@@ -35,14 +41,13 @@ class OrderDetailsController extends GetxController {
       searchQuery.value = searchController.text;
     });
 
-    // Debounce search to avoid too many rebuilds
     debounce(searchQuery, (_) => filterOrders(),
         time: const Duration(milliseconds: 300));
   }
 
   @override
   void onClose() {
-    searchController.dispose(); // Important: dispose the controller
+    searchController.dispose();
     super.onClose();
   }
 
@@ -80,6 +85,86 @@ class OrderDetailsController extends GetxController {
     }
   }
 
+  Future<void> orderAgain() async {
+    try {
+      if (selectedOrder.isEmpty) {
+        _showErrorSnackbar('No order selected');
+        return;
+      }
+
+      final order = selectedOrderMap;
+      final items = order['items'] as List<dynamic>? ?? [];
+
+      if (items.isEmpty) {
+        _showErrorSnackbar('No items found in this order');
+        return;
+      }
+
+      // Show loading
+      Get.dialog(
+        const Center(child: CircularProgressIndicator()),
+        barrierDismissible: false,
+      );
+
+      final cartItems = items.map((item) {
+        return {
+          'productId': item['productId'],
+          'quantity': item['quantity'] ?? 1,
+        };
+      }).toList();
+
+      final response = await cartRepository.addMultipleToCart(items: cartItems);
+
+      // Close loading dialog
+      if (Get.isDialogOpen ?? false) {
+        Navigator.pop(Get.context!);
+      }
+
+      if (response['success'] == true) {
+        await cartController.fetchCartItems();
+        cartController.itemsAddedViaOrderAgain.value = true;
+
+        if (Get.isBottomSheetOpen ?? false) {
+          Navigator.pop(Get.context!);
+        }
+
+        ApptoastUtils.showSuccess('All items added to cart!');
+
+        Future.delayed(const Duration(milliseconds: 500), () {
+          Get.toNamed(Routes.CART);
+        });
+      } else {
+        throw Exception("Failed to add items to cart");
+      }
+    } catch (e) {
+      if (Get.isDialogOpen ?? false) {
+        Navigator.pop(Get.context!);
+      }
+      _showErrorSnackbar('Failed to add items to cart: ${e.toString()}');
+    }
+  }
+
+  Future<bool> areItemsInCart(List<dynamic> orderItems) async {
+    try {
+      final cartResponse = await cartRepository.fetchCartItemsApi();
+
+      if (cartResponse['success'] == true) {
+        final List<dynamic> cartItems = cartResponse['cart'] ?? [];
+
+        for (var orderItem in orderItems) {
+          final productId = orderItem['productId'];
+          final exists = cartItems.any((cartItem) =>
+              cartItem['productId'] == productId ||
+              cartItem['product']?['_id'] == productId);
+          if (exists) return true;
+        }
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
   void filterOrders() {
     if (searchQuery.value.isEmpty && selectedDateRange.value == null) {
       filteredOrders.value = List.from(orders);
@@ -100,12 +185,9 @@ class OrderDetailsController extends GetxController {
   }
 
   bool _orderMatchesSearch(Map<String, dynamic> order, String query) {
-    // Search in order code
     if (order['orderCode']?.toString().toLowerCase().contains(query) == true) {
       return true;
     }
-
-    // Search in customer name
     if (order['customerId']?['customerName']
             ?.toString()
             .toLowerCase()
@@ -245,14 +327,7 @@ class OrderDetailsController extends GetxController {
   }
 
   void _showErrorSnackbar(String message) {
-    Get.snackbar(
-      'Error',
-      message,
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.red,
-      colorText: Colors.white,
-      duration: const Duration(seconds: 3),
-    );
+    ApptoastUtils.showError(message);
   }
 
   String getOrderStatusText(String status) {

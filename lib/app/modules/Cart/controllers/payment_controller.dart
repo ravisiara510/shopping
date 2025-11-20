@@ -197,10 +197,25 @@ class PaymentDialogController extends GetxController {
       AppLogger.info('Payment Response: $data');
 
       if (data['success'] == true) {
-        final CartController cartController = Get.put(CartController());
+        // Update cart controller first
+        final CartController cartController = Get.find<CartController>();
         cartController.isHidePaymentButton.value = true;
+
         showProgress.value = false;
-        Navigator.pop(Get.context!);
+        isLoading.value = false;
+
+        // Reset all variables before closing dialog
+        resetForm();
+
+        // Close the dialog first, then show success message
+        if (Get.isDialogOpen == true) {
+          Get.back(); // Close the dialog
+        }
+
+        // Use a small delay to ensure dialog is completely closed
+        await Future.delayed(const Duration(milliseconds: 300));
+
+        // Now show the success message
         ApptoastUtils.showGetXSuccess(
           'Payment Successful 🎉',
           'Your payment of ₹${amountController.text} has been processed.',
@@ -210,6 +225,7 @@ class PaymentDialogController extends GetxController {
       }
     } catch (e) {
       showProgress.value = false;
+      isLoading.value = false;
       String errorMessage = 'Please try again';
 
       if (e is DioException) {
@@ -226,9 +242,9 @@ class PaymentDialogController extends GetxController {
         AppLogger.error('Payment error: $e');
       }
 
+      // Show error without closing the dialog
       ApptoastUtils.showGetXError('Payment Failed ❌', errorMessage);
     } finally {
-      isLoading.value = false;
       uploadProgress.value = 0.0;
     }
   }
@@ -248,5 +264,32 @@ class PaymentDialogController extends GetxController {
     amountController.dispose();
     remarksController.dispose();
     super.onClose();
+  }
+
+  void resetForm() {
+    // Clear uploaded files
+    uploadedFiles.clear();
+
+    // Reset payment method to default
+    selectedMethod.value = 'cash';
+
+    // Clear text controllers
+    remarksController.clear();
+
+    // Reset amount to original order total
+    final total =
+        (orderData['grandTotal']?.toDouble() ?? 0.0).toStringAsFixed(2);
+    amountController.text = total;
+
+    // Reset validation states
+    amountError.value = '';
+    canSubmit.value = false;
+    validateAmount(total);
+
+    // Reset progress states
+    uploadProgress.value = 0.0;
+    showProgress.value = false;
+    Navigator.pop(Get.context!);
+    AppLogger.debug('Payment form reset successfully');
   }
 }

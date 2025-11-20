@@ -1,4 +1,5 @@
 // order_details_view.dart
+import 'package:eccomerce_app/app/custom/button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -917,6 +918,34 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
                     SizedBox(height: 16.h),
                     _buildOrderSummary(order),
                     SizedBox(height: 16.h),
+                    Obx(() {
+                      final order = controller.selectedOrderMap;
+                      final items = order['items'] as List<dynamic>? ?? [];
+
+                      return Column(
+                        children: [
+                          CustomButton(
+                            text: 'Order Again',
+                            onPressed: () => controller.orderAgain(),
+                          ),
+                          if (items.isNotEmpty) ...[
+                            SizedBox(height: 8.h),
+                            Text(
+                              '${items.length} item${items.length > 1 ? 's' : ''} will be added to your cart',
+                              style: TextStyle(
+                                fontSize: 11.sp,
+                                color: Theme.of(Get.context!)
+                                    .colorScheme
+                                    .onSurface
+                                    .withOpacity(0.6),
+                              ),
+                            ),
+                          ],
+                          SizedBox(height: 16.h),
+                        ],
+                      );
+                    }),
+                    SizedBox(height: 16.h),
                   ],
                 ),
               ),
@@ -1069,30 +1098,10 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
                   ),
                 ],
               ),
-            ],
-          ),
-          SizedBox(height: 16.h),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildDetailRow('Invoice', order['InvoiceNumber'] ?? 'N/A'),
-                    _buildDetailRow('Date',
-                        controller.formatDate(order['createdAt'] ?? '')),
-                    if (order['TallyTransactionID'] != null)
-                      _buildDetailRow(
-                          'Transaction', order['TallyTransactionID']!),
-                  ],
-                ),
-              ),
-              SizedBox(width: 16.w),
               Container(
                 padding: EdgeInsets.symmetric(
-                  horizontal: 14.w,
-                  vertical: 10.h,
+                  horizontal: 12.w,
+                  vertical: 6.h,
                 ),
                 decoration: BoxDecoration(
                   color: controller
@@ -1125,6 +1134,25 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 16.h),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildDetailRow('Invoice', order['InvoiceNumber'] ?? 'N/A'),
+                    _buildDetailRow('Date',
+                        controller.formatDate(order['createdAt'] ?? '')),
+                    if (order['TallyTransactionID'] != null)
+                      _buildDetailRow(
+                          'Transaction', order['TallyTransactionID']!),
                   ],
                 ),
               ),
@@ -1956,16 +1984,7 @@ class OrderDetailsView extends GetView<OrderDetailsController> {
               subtitle: const Text('Copy order details to clipboard'),
               onTap: () {
                 Clipboard.setData(ClipboardData(text: shareContent));
-                ScaffoldMessenger.of(Get.context!).showSnackBar(
-                  SnackBar(
-                    content: const Text('Order details copied to clipboard!'),
-                    backgroundColor: Colors.green,
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12.r),
-                    ),
-                  ),
-                );
+
                 Navigator.pop(context);
               },
             ),

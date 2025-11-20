@@ -1,6 +1,10 @@
+// lib/core/services/api_client.dart
 import 'package:dio/dio.dart';
-import 'package:eccomerce_app/app/core/utils/appString/app_storage_string.dart';
+import 'package:get/get.dart';
+import '../../routes/app_pages.dart';
+import '../../services/auth_service.dart';
 import '../config/environment.dart';
+import '../utils/appString/app_storage_string.dart';
 import '../data/sharedPre.dart';
 import 'api_exceptions.dart';
 
@@ -18,6 +22,7 @@ class ApiClient {
         headers: {'Content-Type': 'application/json'},
       ),
     );
+
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
@@ -30,8 +35,21 @@ class ApiClient {
         onResponse: (response, handler) {
           return handler.next(response);
         },
-        onError: (DioException e, handler) {
+        onError: (DioException e, handler) async {
           final customException = ApiException.fromDioError(e);
+
+          // Handle 401 globally at the interceptor level
+          if (customException.isUnauthorized) {
+            try {
+              final authService = Get.find<AuthService>();
+              await authService.handleUnauthorizedError();
+            } catch (e) {
+              // If AuthService is not available, handle directly
+              await SharedpreferenceUtil.clear();
+              Get.offAllNamed(Routes.SIGN_UP);
+            }
+          }
+
           return handler.reject(customException);
         },
       ),

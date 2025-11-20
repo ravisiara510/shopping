@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import '../../../services/toast_service.dart';
 import '../../SignUp/repositories/auth_repository.dart';
@@ -23,21 +24,21 @@ class ProfileController extends GetxController {
   }
 
   void increment() => count.value++;
-
-  // 🚪 LOGOUT FUNCTION WITH ALERT DIALOG
   void showLogoutConfirmation() {
     Get.dialog(
       AlertDialog(
         title: Text(
-          'logout_confirmation'.tr,
+          'Logout',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             color: Get.theme.colorScheme.error,
+            fontSize: 14.sp,
           ),
         ),
         content: Text(
-          'logout_message'.tr,
+          'Are you sure you want to logout? You will need to sign in again to access your account.',
           style: TextStyle(
+            fontSize: 12.sp,
             color: Get.theme.colorScheme.onSurface.withOpacity(0.7),
           ),
         ),
@@ -53,8 +54,8 @@ class ProfileController extends GetxController {
             style: TextButton.styleFrom(
               foregroundColor: Get.theme.colorScheme.onSurface.withOpacity(0.7),
             ),
-            child: Text(
-              'cancel'.tr,
+            child: const Text(
+              'Cancel',
               style: TextStyle(
                 fontWeight: FontWeight.w500,
               ),
@@ -69,8 +70,8 @@ class ProfileController extends GetxController {
             style: TextButton.styleFrom(
               foregroundColor: Get.theme.colorScheme.error,
             ),
-            child: Text(
-              'logout'.tr,
+            child: const Text(
+              'Logout',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
               ),
@@ -97,9 +98,9 @@ class ProfileController extends GetxController {
       await _authRepository.logout();
 
       // Show success message
-      ApptoastUtils.showSuccess('logout_success'.tr);
+      ApptoastUtils.showSuccess('logout success'.tr);
     } catch (e) {
-      ApptoastUtils.showError('logout_failed'.tr);
+      ApptoastUtils.showError('logout failed'.tr);
     } finally {
       if (Get.isDialogOpen == true) {
         Navigator.pop(Get.context!);

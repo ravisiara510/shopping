@@ -4,7 +4,6 @@ import 'package:eccomerce_app/app/core/utils/appString/app_storage_string.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:device_info_plus/device_info_plus.dart';
-
 import '../../../core/data/sharedPre.dart';
 import '../../../core/services/api_service.dart';
 import '../../../core/services/api_exceptions.dart';
@@ -18,7 +17,6 @@ class AuthRepository {
   var isLoading = false.obs;
   String? _deviceId;
 
-  // Initialize device ID
   Future<void> initializeDeviceId() async {
     try {
       final DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
@@ -55,11 +53,7 @@ class AuthRepository {
           "deviceId": _deviceId,
         },
       );
-
-      // Handle different response structures
       final responseData = response.data;
-
-      // Check if response has 'data' field or is the direct response
       Map<String, dynamic> data;
       if (responseData is Map && responseData.containsKey('data')) {
         data = responseData['data'];
@@ -67,8 +61,6 @@ class AuthRepository {
         data =
             responseData is Map ? Map<String, dynamic>.from(responseData) : {};
       }
-
-      // Extract token and user data safely
       final token = _extractToken(data);
       final user = _extractUser(data);
       final profileImage = user['profilePicture']?.toString() ?? '';
@@ -79,7 +71,6 @@ class AuthRepository {
           await SharedpreferenceUtil.setString(
               AppStorage.profileImage, profileImage);
         }
-        // Save device ID for future use
         await SharedpreferenceUtil.setString(AppStorage.deviceID, _deviceId!);
       }
 
@@ -89,10 +80,8 @@ class AuthRepository {
 
       return data;
     } on ApiException catch (e) {
-      // Handle specific "another device" error
       if (_isAnotherDeviceError(e)) {
         await _handleAnotherDeviceError();
-        // Return empty map instead of rethrowing
         return {};
       }
 
@@ -177,10 +166,8 @@ class AuthRepository {
   Future<void> _handleAnotherDeviceError() async {
     AppLogger.warning("User logged in from another device");
 
-    // Clear local storage
     await SharedpreferenceUtil.clear();
 
-    // Show session expired dialog
     Get.dialog(
       _buildSessionExpiredDialog(),
       barrierDismissible: false,
@@ -242,16 +229,12 @@ class AuthRepository {
     }
   }
 
-  /// 🚪 LOGOUT USER
   Future<void> logout() async {
     await SharedpreferenceUtil.clear();
-    AppLogger.info("User logged out & storage cleared");
 
-    // Navigate to signup page after logout
     Get.offAllNamed(Routes.SIGN_UP);
   }
 
-  /// 📥 GET LOCAL DATA
   String getUserToken() => SharedpreferenceUtil.getString(AppStorage.userToken);
 
   String getUserRole() => SharedpreferenceUtil.getString(AppStorage.userRole);
@@ -269,13 +252,11 @@ class AuthRepository {
 
   String getDeviceId() => SharedpreferenceUtil.getString(AppStorage.deviceID);
 
-  /// 🔍 CHECK IF USER IS LOGGED IN
   bool isUserLoggedIn() {
     final token = getUserToken();
     return token.isNotEmpty;
   }
 
-  /// 🔄 VALIDATE TOKEN
   Future<bool> validateToken() async {
     final token = getUserToken();
     if (token.isEmpty) return false;
@@ -345,15 +326,6 @@ class AuthRepository {
           'code': company['code']?.toString() ?? 'N/A',
           'logo': company['logo']?.toString(),
         };
-      } else if (company is String) {
-        return {
-          'id': company,
-          'name': 'Company $company',
-          'namePrint': 'Company $company',
-          'nameStreet': 'No Address',
-          'code': 'N/A',
-          'logo': null,
-        };
       } else {
         return {
           'id': 'unknown',
@@ -392,7 +364,6 @@ class AuthRepository {
             AppStorage.companyModules, jsonEncode(modules));
         AppLogger.info("Company modules saved for: $companyName");
 
-        // Extract and save CustomerRegistration create permission
         bool createPermission = _extractCustomerCreatePermission(modules);
 
         await SharedpreferenceUtil.setBool(
@@ -514,15 +485,12 @@ class AuthRepository {
     }
   }
 
-  // Method to get saved company modules from SharedPreferences
   Map<String, dynamic> getSavedCompanyModules() {
     try {
       final modulesJson =
           SharedpreferenceUtil.getString(AppStorage.companyModules);
       if (modulesJson.isEmpty) return {};
       final modules = jsonDecode(modulesJson);
-
-      // Print CustomerRegistration create permission when retrieving
       if (modules.containsKey('BusinessManagement')) {
         final businessManagement = modules['BusinessManagement'];
         if (businessManagement is Map &&
@@ -544,7 +512,6 @@ class AuthRepository {
     }
   }
 
-  // Method to check specific module permission
   bool checkModulePermission(String module, String subModule, String action) {
     try {
       final modules = getSavedCompanyModules();
@@ -555,14 +522,12 @@ class AuthRepository {
           final subModuleData = moduleData[subModule];
           if (subModuleData is Map && subModuleData.containsKey(action)) {
             final permission = subModuleData[action] == true;
-            print(
-                "🔍 Permission check - $module.$subModule.$action: $permission");
+
             return permission;
           }
         }
       }
-      print(
-          "🔍 Permission check - $module.$subModule.$action: false (not found)");
+
       return false;
     } catch (e) {
       AppLogger.error("Error checking module permission: $e");
@@ -570,19 +535,14 @@ class AuthRepository {
     }
   }
 
-  // Method to print all modules for debugging
   void printAllModules() {
     final modules = getSavedCompanyModules();
-    print("🎯 ALL SAVED MODULES:");
-    print(jsonEncode(modules));
 
-    // Print specific CustomerRegistration permissions
     if (modules.containsKey('BusinessManagement')) {
       final businessManagement = modules['BusinessManagement'];
       if (businessManagement is Map &&
           businessManagement.containsKey('CustomerRegistration')) {
         final customerRegistration = businessManagement['CustomerRegistration'];
-        print("🎯 CustomerRegistration permissions: $customerRegistration");
       }
     }
   }

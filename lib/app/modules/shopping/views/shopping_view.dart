@@ -7,7 +7,6 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:shimmer/shimmer.dart';
-import '../../../custom/app_grid.dart';
 import '../../../routes/app_pages.dart';
 import '../../../services/toast_service.dart';
 import '../controllers/shopping_controller.dart';
@@ -80,7 +79,7 @@ class ShoppingView extends GetView<ShoppingController> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               SizedBox(
-                height: 55.h,
+                height: 53.h,
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -144,7 +143,7 @@ class ShoppingView extends GetView<ShoppingController> {
                     SizedBox(width: 4.w),
                     Container(
                       width: 50.w,
-                      height: 55.h,
+                      height: 53.h,
                       decoration: BoxDecoration(
                         color: theme.colorScheme.surface,
                         borderRadius: BorderRadius.circular(12.r),
@@ -556,7 +555,7 @@ class ShoppingView extends GetView<ShoppingController> {
               child: Obx(() => controller.isLoadMore.value
                   ? Padding(
                       padding: EdgeInsets.symmetric(vertical: 20.h),
-                      child: Center(
+                      child: const Center(
                         child: CircularProgressIndicator(),
                       ),
                     )
@@ -1042,7 +1041,7 @@ class ShoppingView extends GetView<ShoppingController> {
       child: Stack(
         children: [
           Container(
-            height: 210.h,
+            height: 180.h,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(15.r),
               gradient: LinearGradient(
@@ -1058,7 +1057,7 @@ class ShoppingView extends GetView<ShoppingController> {
               options: CarouselOptions(
                 autoPlay: true,
                 viewportFraction: 1,
-                height: 210.h,
+                height: 180.h,
                 autoPlayInterval: const Duration(seconds: 4),
                 autoPlayAnimationDuration: const Duration(milliseconds: 800),
                 onPageChanged: (index, reason) {
@@ -1187,7 +1186,7 @@ class ShoppingView extends GetView<ShoppingController> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(),
+          const CircularProgressIndicator(),
           SizedBox(height: 16.h),
           Text(
             'Loading Products...',
@@ -1250,7 +1249,7 @@ class ShoppingView extends GetView<ShoppingController> {
   Widget _buildLoadMoreIndicator() {
     return Container(
       padding: EdgeInsets.symmetric(vertical: 20.h),
-      child: Center(
+      child: const Center(
         child: CircularProgressIndicator(),
       ),
     );
@@ -1417,7 +1416,7 @@ class ShoppingView extends GetView<ShoppingController> {
                 },
                 child: Container(
                   padding:
-                      EdgeInsets.symmetric(horizontal: 10.w, vertical: 8.h),
+                      EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
                   decoration: BoxDecoration(
                     color: isSelected
                         ? theme.colorScheme.primary

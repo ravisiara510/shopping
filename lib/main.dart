@@ -7,12 +7,14 @@ import 'app/core/data/sharedPre.dart';
 import 'app/core/theme/light_theme.dart';
 import 'app/core/theme/dark_theme.dart';
 import 'app/routes/app_pages.dart';
+import 'app/services/auth_service.dart';
 import 'generated/locales.g.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SharedpreferenceUtil.init();
   HttpOverrides.global = MyHttpOverrides();
+  await Get.putAsync(() => AuthService().init());
 
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(

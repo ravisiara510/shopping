@@ -1,6 +1,7 @@
 import 'package:eccomerce_app/app/core/data/sharedPre.dart';
 import 'package:eccomerce_app/app/core/utils/appString/app_storage_string.dart';
 import 'package:eccomerce_app/app/routes/app_pages.dart';
+import 'package:eccomerce_app/app/services/toast_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:convert';
@@ -50,7 +51,7 @@ class CompanySelectionDialog extends StatelessWidget {
               // Header
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primaryContainer,
                   borderRadius: const BorderRadius.only(
@@ -63,21 +64,20 @@ class CompanySelectionDialog extends StatelessWidget {
                     ListTile(
                       leading: Icon(
                         Icons.business,
-                        color: theme.colorScheme.onPrimaryContainer,
+                        color: theme.cardColor,
                         size: 28,
                       ),
                       title: Text(
                         "Select Company",
                         style: SummerTextStyle.headingMedium.copyWith(
-                          color: theme.colorScheme.onPrimaryContainer,
+                          color: theme.cardColor,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       subtitle: Text(
                         "Choose a company to continue",
                         style: SummerTextStyle.bodyMedium.copyWith(
-                          color: theme.colorScheme.onPrimaryContainer
-                              .withOpacity(0.8),
+                          color: theme.cardColor.withOpacity(0.8),
                         ),
                       ),
                     ),
@@ -125,7 +125,7 @@ class CompanySelectionDialog extends StatelessWidget {
                   child: Text(
                     "Close",
                     style: SummerTextStyle.buttonMedium.copyWith(
-                      color: theme.colorScheme.onPrimaryContainer,
+                      color: theme.cardColor,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -332,6 +332,7 @@ class CompanySelectionDialog extends StatelessWidget {
                           height: MediaQuery.of(context).size.height * 0.003),
                       Text(
                         "Code: ${companyData['code']?.toString() ?? 'N/A'}",
+                        maxLines: 1,
                         style: SummerTextStyle.bodySmall.copyWith(
                           color: theme.colorScheme.onSurface.withOpacity(0.6),
                         ),
@@ -414,37 +415,30 @@ class CompanySelectionDialog extends StatelessWidget {
     }
 
     try {
-      // Show loading dialog
       Get.dialog(
         const Center(child: CircularProgressIndicator()),
         barrierDismissible: false,
       );
-
-      // Save company ID and name
       await SharedpreferenceUtil.setString(
           AppStorage.selectedCompanyId, companyId);
       await SharedpreferenceUtil.setString(AppStorage.selectedCompanyName,
           companyData['namePrint']?.toString() ?? 'Unknown Company');
-
-      // Extract and save company modules
       await _saveCompanyModules(companyId, company);
 
-      // Close loading dialog
       if (Get.isDialogOpen == true) Get.back();
 
-      // Navigate to base
       Get.offAllNamed(Routes.BASE, arguments: {
         'companyId': companyId,
         'companyName':
             companyData['namePrint']?.toString() ?? 'Unknown Company',
       });
 
-      Get.snackbar("Success", "Company selected successfully");
+      ApptoastUtils.showSuccess("Company selected successfully");
     } catch (e) {
       // Close loading dialog if open
       if (Get.isDialogOpen == true) Get.back();
 
-      Get.snackbar("Error", "Failed to select company: $e");
+      ApptoastUtils.showError("Failed to select company: $e");
     }
   }
 

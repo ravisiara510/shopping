@@ -38,8 +38,8 @@ class SignUpView extends GetView<SignUpController> {
                 padding: EdgeInsets.symmetric(
                   horizontal: isTablet
                       ? (isLandscape ? screenWidth * 0.25 : screenWidth * 0.2)
-                      : 24,
-                  vertical: isTablet ? 60 : 40,
+                      : 16,
+                  vertical: isTablet ? 30 : 20,
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -69,7 +69,7 @@ class SignUpView extends GetView<SignUpController> {
         ],
       ),
       child: Padding(
-        padding: EdgeInsets.all(isTablet ? 48 : 32),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [

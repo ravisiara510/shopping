@@ -1,12 +1,16 @@
+// In api_exceptions.dart
 import 'package:dio/dio.dart';
 
 class ApiException extends DioException {
   final String message;
+  final int? statusCode;
 
-  ApiException._(this.message, {required super.requestOptions});
+  ApiException._(this.message,
+      {required super.requestOptions, this.statusCode});
 
   factory ApiException.fromDioError(DioException error) {
     String message = "Something went wrong";
+    int? statusCode;
 
     switch (error.type) {
       case DioExceptionType.connectionTimeout:
@@ -19,7 +23,7 @@ class ApiException extends DioException {
         message = "Receive timeout. Please try again.";
         break;
       case DioExceptionType.badResponse:
-        final statusCode = error.response?.statusCode ?? 0;
+        statusCode = error.response?.statusCode ?? 0;
         message = _handleStatusCode(statusCode, error.response?.data);
         break;
       case DioExceptionType.cancel:
@@ -32,7 +36,8 @@ class ApiException extends DioException {
         message = "Unexpected error occurred.";
         break;
     }
-    return ApiException._(message, requestOptions: error.requestOptions);
+    return ApiException._(message,
+        requestOptions: error.requestOptions, statusCode: statusCode);
   }
 
   static String _handleStatusCode(int statusCode, dynamic data) {
@@ -51,6 +56,8 @@ class ApiException extends DioException {
         return "Received invalid status code: $statusCode";
     }
   }
+
+  bool get isUnauthorized => statusCode == 401;
 
   @override
   String toString() => message;

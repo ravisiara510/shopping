@@ -1,6 +1,9 @@
+import 'package:eccomerce_app/app/custom/button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import '../../../routes/app_pages.dart';
+import '../../Base/controllers/base_controller.dart';
 import '../controllers/cart_controller.dart';
 import 'cart_item_widget.dart';
 import 'special_instructions.dart';
@@ -19,11 +22,10 @@ class CartItemsContainer extends GetView<CartController> {
   Widget build(BuildContext context) {
     return Obx(() {
       return Container(
-        margin: EdgeInsets.symmetric(
-            horizontal: 12.w, vertical: 4.h), // -4 from 16, 8
+        margin: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(16.r), // -4 from 20
+          borderRadius: BorderRadius.circular(16.r),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.04),
@@ -41,10 +43,41 @@ class CartItemsContainer extends GetView<CartController> {
               color: theme.colorScheme.outline.withOpacity(0.1),
             ),
             SpecialInstructions(size: size, theme: theme, isInContainer: true),
+            // ✅ Show button only when items were added via Order Again
+            if (controller.cartItems.isNotEmpty &&
+                controller.itemsAddedViaOrderAgain.value)
+              Padding(
+                padding: EdgeInsets.all(16.w),
+                child: CustomButton(
+                  text: 'Add More Items',
+                  onPressed: _navigateToHome,
+                ),
+              ),
           ],
         ),
       );
     });
+  }
+
+  void _navigateToHome() {
+    try {
+      if (Get.isDialogOpen ?? false) Get.back();
+      if (Get.isBottomSheetOpen ?? false) Get.back();
+      if (Get.isSnackbarOpen) Get.closeCurrentSnackbar();
+
+      // Reset the flag when navigating away
+      controller.itemsAddedViaOrderAgain.value = false;
+
+      Get.until((route) {
+        return route.settings.name == Routes.BASE || route.isFirst;
+      });
+
+      final baseController = Get.find<BaseController>();
+      baseController.changeTabIndex(0);
+      baseController.initializeDashbord();
+    } catch (e) {
+      Get.offAllNamed(Routes.BASE);
+    }
   }
 
   Widget _buildCartItemsList() {
@@ -81,20 +114,20 @@ class CartItemsContainer extends GetView<CartController> {
 
   Widget _buildEmptyCart() {
     return Container(
-      padding: EdgeInsets.all(28.w), // -4 from 32
+      padding: EdgeInsets.all(28.w),
       child: Column(
         children: [
           Icon(
             Icons.shopping_cart_outlined,
-            size: 60.w, // -4 from 64
+            size: 60.w,
             color: theme.colorScheme.onSurface.withOpacity(0.3),
           ),
-          SizedBox(height: 12.h), // -4 from 16
+          SizedBox(height: 12.h),
           Text(
             'Your cart is empty',
             style: theme.textTheme.titleMedium?.copyWith(
               color: theme.colorScheme.onSurface.withOpacity(0.5),
-              fontSize: 16.sp, // Adjusted
+              fontSize: 16.sp,
             ),
           ),
         ],
